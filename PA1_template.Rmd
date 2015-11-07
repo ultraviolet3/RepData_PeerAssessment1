@@ -43,7 +43,7 @@ keep_md: true
 #Finding average activity
     dailymean=ddply(actdf,.(date,month,odate),summarize,d_mean=mean(steps))
 #Display results
-    dailymean
+    head(dailymean)
 ```
 
 
