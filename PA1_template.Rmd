@@ -1,25 +1,90 @@
 ---
-title: "Reproducible Research: Peer Assessment 1"
+#Reproducible Research: Peer Assessment 1
 output: 
-  html_document:
-    keep_md: true
+html_document:
+keep_md: true
 ---
 
-
 ## Loading and preprocessing the data
-
+```{r echo=TRUE}
+#libraries
+    library(knitr)
+#Set variables
+    url="https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip"
+    fil="activity.zip"
+    dest= paste(getwd(),fil,sep="/")
+#Check if file exists. If not, then download the data file
+    if (!file.exists(fil)) {
+        download.file(url,dest)
+    }
+#Unzip the data file
+    unzip(dest)
+#Read the csv file into a data frame
+    fil=paste(getwd(),"activity.csv",sep="/")
+    actdf=as.data.frame(read.csv(fil,header=TRUE, na.strings="NA",blank.lines.skip=TRUE))
+    head(actdf)
+#Removing missing values
+    actdf=actdf[complete.cases(actdf),]
+    head(actdf)
+#Adding days column, Week column and week/weekend determination
+    actdf$day=weekdays(as.Date(actdf$date))
+    actdf$month = strftime(actdf$date, format = "%b %Y")
+    actdf$odate=strftime(actdf$date, format = "%d")
+    actdf$wday[actdf$day %in% c("Saturday","Sunday")]= "Weekend"
+    actdf$wday[actdf$day %in% c("Monday","Tuesday","Wednesday","Thursday","Friday")]= "Weekday"
+    head(actdf)
+```
 
 
 ## What is mean total number of steps taken per day?
-
+```{r echo=TRUE}
+#libraries
+    library(plyr)
+#Finding average activity
+    dailymean=ddply(actdf,.(date,month,odate),summarize,d_mean=mean(steps))
+#Display results
+    dailymean
+```
 
 
 ## What is the average daily activity pattern?
 
-
+```{r echo=TRUE}
+#libraries
+    library(ggplot2)
+#Plotting
+    x<-ggplot(dailymean,aes(odate,d_mean),fill=month)
+    x<-x+geom_bar(stat="identity",color="yellow",fill="violet")
+    x<-x+facet_grid(.~month)
+    x<-x+xlab("Date")
+    x<-x+ylab("Activity (Steps)")
+    x<-x+ggtitle("Daily Activity Pattern")
+    #Display plot
+    x
+```
 
 ## Imputing missing values
-
-
+```{r echo=TRUE}
+    head(actdf)
+    actdf=actdf[complete.cases(actdf),]
+    head(actdf)
+```
 
 ## Are there differences in activity patterns between weekdays and weekends?
+```{r echo=TRUE}
+    #libraries
+    library(plyr)
+    library(ggplot2)
+#Finding mean
+    wdaymean=ddply(actdf,.(wday,day),summarize,wk_mean=mean(steps))
+#Plotting
+    y<-ggplot(wdaymean,aes(day,wk_mean,fill=wday))
+    y<-y+geom_bar(stat="identity",colour="black")
+    y<-y+xlab("Day")
+    y<-y+ylab("Activity (Steps)")
+    y<-y+ggtitle("Weekday vs Weekend Activity Pattern")
+    y<-y+scale_x_discrete(limits=c("Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"))
+    y<-y+scale_fill_hue(l=40)
+#Display plot
+    y
+```
